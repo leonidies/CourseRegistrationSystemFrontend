@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deregidterfromcourse</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat" style="background-image: url('/CourseRegistrationFrontEnd/Images/Registerbg.jpg');">
+
+    
+    <div class="absolute inset-0 bg-black opacity-30 z-0"></div>
+
+    
+    <div class="relative z-10 container mx-auto p-6">
+
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white">Your Courses</h1>
+        </div>
+
+        <!-- Registered Courses Section -->
+        <div class="w-full md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto">
+            <h2 class="text-2xl font-semibold text-gray-200 mb-6 text-center">Your Courses List Are Here You Can Deregister If You Want</h2>
+            <div id="registeredCourses" class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
+                <!-- Registered courses will be dynamically add here -->
+            </div>
+        </div> 
+    </div>
+
+    <script>
+        //  user ID from sessionStorage
+        const userId = sessionStorage.getItem('userId');
+
+        // Function to fetch and display registered courses
+        async function getRegisteredCourses() {
+            try {
+                const response = await fetch(`http://localhost:8080/registration/registeredCourses?userId=${userId}`);
+                if (!response.ok) throw new Error('Failed to fetch registered courses');
+                const courses = await response.json();
+
+                const registeredCoursesContainer = document.getElementById('registeredCourses');
+                registeredCoursesContainer.innerHTML = ''; 
+
+                courses.forEach(course => {
+                    const courseDiv = document.createElement('div');
+                    courseDiv.classList.add('bg-black', 'p-7', 'rounded-lg', 'shadow-lg', 'transition', 'transform', 'hover:scale-105', 'space-y-4');
+                    courseDiv.innerHTML = `
+                        <h3 class="text-xl font-semibold text-gray-400">${course.courseId} - ${course.courseName}</h3>
+                        <p class="text-gray-400">${course.description}</p>
+                        <p class="text-gray-400"><strong>Instructor:</strong> ${course.courseInstructor}</p>
+                        <p class="text-gray-400"><strong>Duration:</strong> ${course.courseDuration}</p>
+                        <p class="text-gray-400"><strong>Prerequisites:</strong> ${course.prerequisites}</p>
+                        <button class="bg-red-500 text-white px-4 py-2 rounded shadow hover:bg-red-600" onclick="deregisterFromCourse('${course.courseId}')">Deregister</button>
+                    `;
+                    registeredCoursesContainer.appendChild(courseDiv);
+                });
+            } catch (error) {
+                console.error('Error fetching registered courses:', error);
+            }
+        }
+
+        // Function to deregister from a course
+        async function deregisterFromCourse(courseId) {
+            try {
+                const response = await fetch(`http://localhost:8080/registration/deregister?userId=${userId}&courseId=${courseId}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) throw new Error('Failed to deregister from course');
+
+                const result = await response.text();
+                alert(result); 
+
+                getRegisteredCourses(); 
+            } catch (error) {
+                console.error('Error deregistering from course:', error);
+                alert('Error deregistering from course');
+            }
+        }
+
+        //  function calls to load the courses when the page loads
+        window.onload = function() {
+            if (!userId) {
+                alert('You must be logged in to view or deregister from courses');
+                return;
+            }
+
+            getRegisteredCourses(); 
+        };
+    </script>
+
+</body>
+</html>
